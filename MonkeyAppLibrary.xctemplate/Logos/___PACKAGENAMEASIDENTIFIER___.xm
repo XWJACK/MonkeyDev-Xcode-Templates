@@ -2,59 +2,29 @@
 
 #import <UIKit/UIKit.h>
 
-@interface CustomViewController
+#import <FLEX/FLEXManager.h>
+/// #import <CocoaLumberjack/CocoaLumberjack.h>
 
-@property (nonatomic, copy) NSString* newProperty;
 
-+ (void)classMethod;
+%hook AppDelegate
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
+    BOOL result = %orig;
+    [[FLEXManager sharedManager] showExplorer];
 
-- (NSString*)getMyName;
+    /// [DDLog addLogger:[DDOSLogger sharedInstance]]; // Uses os_log
 
-- (void)newMethod:(NSString*) output;
-
-@end
-
-%hook CustomViewController
-
-+ (void)classMethod
-{
-	%log;
-
-	%orig;
+    return result;
 }
+%end
 
-%new
--(void)newMethod:(NSString*) output{
-    NSLog(@"This is a new method : %@", output);
+%hook AFSecurityPolicy
+- (NSUInteger)SSLPinningMode {
+    return 0;
 }
-
-%new
-- (id)newProperty {
-    return objc_getAssociatedObject(self, @selector(newProperty));
+- (BOOL)allowInvalidCertificates {
+    return YES;
 }
-
-%new
-- (void)setNewProperty:(id)value {
-    objc_setAssociatedObject(self, @selector(newProperty), value, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+- (BOOL)validatesDomainName {
+    return NO;
 }
-
-- (NSString*)getMyName
-{
-	%log;
-    
-    NSString* password = MSHookIvar<NSString*>(self,"_password");
-    
-    NSLog(@"password:%@", password);
-    
-    [%c(CustomViewController) classMethod];
-    
-    [self newMethod:@"output"];
-    
-    self.newProperty = @"newProperty";
-    
-    NSLog(@"newProperty : %@", self.newProperty);
-
-	return %orig();
-}
-
 %end

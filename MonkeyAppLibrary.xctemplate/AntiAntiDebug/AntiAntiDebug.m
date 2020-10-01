@@ -93,6 +93,12 @@ int my_syscall(int code, va_list args){
     return orig_syscall(code, newArgs);
 }
 
+typedef int (*exit_ptr_t)(int status);
+static exit_ptr_t orig_exit = NULL;
+void* my_exit(int status);
+void* my_exit(int status){
+}
+
 __attribute__((constructor)) static void entry(){
     NSLog(@"[AntiAntiDebug Init]");
     
